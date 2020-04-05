@@ -29,35 +29,38 @@ int main()
     string clearTextString = "I am a string and going to be protected by an awesome encryption algorithm ;)";
     unsigned int encryptionResultSize = 0;
 
-    uint8_t* clearText = new uint8_t[clearTextString.length() + 1];
-    unsigned int clearTextBufferSize = clearTextString.length() + 1;
-    strcpy_s((char*)clearText, clearTextBufferSize, clearTextString.c_str());
+    shared_ptr<uint8_t[]> clearText(new uint8_t[clearTextString.length() + 1]);
+    size_t clearTextBufferSize = clearTextString.length() + 1;
 
-    uint8_t* encryptedText = new uint8_t[clearTextString.length() + 1];
-    unsigned int encryptedTextBufferSize = clearTextBufferSize;
+    shared_ptr<uint8_t[]> encryptedText(new uint8_t[clearTextString.length() + 1]);
+    size_t encryptedTextBufferSize = clearTextBufferSize;
 
-    uint8_t* decryptedText = new uint8_t[clearTextString.length() + 1];
-    unsigned int decryptedTextBufferSize = clearTextBufferSize;
+    shared_ptr<uint8_t[]> decryptedText(new uint8_t[clearTextString.length() + 1]);
+    size_t decryptedTextBufferSize = clearTextBufferSize;
 
-    bool cryptResult = encryptData(clearText, clearTextBufferSize, encryptedText, encryptedTextBufferSize,
-        (uint8_t*) passwordString.c_str(), passwordString.length(), &encryptionResultSize);
+    strcpy_s((char*)clearText.get(), clearTextBufferSize, clearTextString.c_str());
+    bool cryptResult = encryptData(clearText.get(), (unsigned int) clearTextBufferSize, 
+        encryptedText.get(), (unsigned int) encryptedTextBufferSize,
+        (uint8_t*) passwordString.c_str(), (unsigned int) passwordString.length(), 
+        &encryptionResultSize);
 
     if (!cryptResult){ 
-        cerr << "error" << endl;
-        delete clearText;
-        delete encryptedText;
-        delete decryptedText;
+        cerr << "error during encryption" << endl;
         return EXIT_FAILURE; 
     }
 
-    cout << "success, encrypted data size: " << encryptionResultSize << endl;
-    bool decryptResult = decryptData(encryptedText, encryptionResultSize,
-        decryptedText, decryptedTextBufferSize, (uint8_t*) passwordString.c_str(),
-        passwordString.length());
+    cout << "encryption success, encrypted data size: " << encryptionResultSize << endl;
+    bool decryptResult = decryptData(encryptedText.get(), encryptionResultSize,
+        decryptedText.get(), (unsigned int) decryptedTextBufferSize, (uint8_t*) passwordString.c_str(),
+        (unsigned int) passwordString.length());
 
-    delete clearText;
-    delete encryptedText;
-    delete decryptedText;
+    if (!decryptResult) {
+        cerr << "error during decryption" << endl;
+        return EXIT_FAILURE;
+    }
+
+    string decryptedResult((char*)decryptedText.get());
+    cout << "decryption success, text is: " << decryptedResult << endl;
     return EXIT_SUCCESS; 
 }
 
